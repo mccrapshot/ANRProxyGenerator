@@ -4,12 +4,23 @@ from io import BytesIO
 import math
 import sys
 import getopt
+import os
 
 base_url = "https://netrunnerdb.com/api/2.0/public/deck/"
+root_dir = "C:\\Netrunner\\"
 resize_height = 346
 resize_width = 243
 usage = 'ANRProxyGenerator.py -d <deck id>'
 
+
+def determineFilename(ID)
+	if (ID(:1) == '00' or ID(:1) == '01' or ID(:1) == '03' or ID(:1) == '05' or ID(:1) == '07' or ID(:1) == '09' or ID(:1) == '13' or ID(:1) == '20' or ID(:1) == '22' or ID(:1) == '23' or ID(:1) == '24') :
+		filename = root_dir + ID(:1) + "*\\" + ID(2:4) + "*.jpg"
+		return filename
+	elif (ID(:1) == '02' and ID(:1) == '04' and ID(:1) == '06' and ID(:1) == '08' and ID(:1) == '10' and ID(:1) == '11' and ID(:1) == '12' and ID(:1) == '21') :
+		subfolder = str(int(ID(2:4))//20).zfill(2)
+		filename = root_dir + ID(:1) + "*\\" + subfolder + "*\\" + ID(2:4) + "*.jpg"
+		
 
 def main(argv):
     deck_id = -1
@@ -28,7 +39,9 @@ def main(argv):
             proxy_list = []
 
             for card_id, number in deck_data['data'][0]['cards'].items():
-                card_picture = requests.get("http://netrunnerdb.com/card_image/" + card_id + ".png")
+                #card_picture = requests.get("http://netrunnerdb.com/card_image/" + card_id + ".png")
+				card_filename = root_dir + card_id(0,1) + "*\\" +
+				card_picture = Image.open(root_dir + card_id(0,1) +
                 resized_card_picture = Image.open(BytesIO(card_picture.content)).convert("RGBA")
                 resized_card_picture = resized_card_picture.resize((resize_width, resize_height), Image.LANCZOS)
 
