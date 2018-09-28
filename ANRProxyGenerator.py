@@ -15,19 +15,20 @@ resize_width = 243
 usage = 'ANRProxyGenerator.py -d <deck id>'
 
 
-def determineFilename(ID) :
-	#if (ID(:1) == '00' or ID(:1) == '01' or ID(:1) == '03' or ID(:1) == '05' or ID(:1) == '07' or ID(:1) == '09' or ID(:1) == '13' or ID(:1) == '20' or ID(:1) == '22' or ID(:1) == '23' or ID(:1) == '24') :
-	if (ID[0:2] == '00' or ID[0:2] == '01' or ID[0:2] == '03' or ID[0:2] == '05' or ID[0:2] == '07' or ID[0:2] == '09' or ID[0:2] == '13' or ID[0:2] == '20' or ID[0:2] == '22' or ID[0:2] == '23' or ID[0:2] == '24') :
-		#filename = glob.glob(root_dir + ID(:1) + "*\\" + ID(2:4) + "*.jpg")
-		filename = glob.glob(root_dir + ID[0:2] + "*/" + ID[2:5] + "*.jpg")
-		return filename
-	elif (ID[0:2] == '02' and ID[0:2] == '04' and ID[0:2] == '06' and ID[0:2] == '08' and ID[0:2] == '10' and ID[0:2] == '11' and ID[0:2] == '12' and ID[0:2] == '21') :
-		subfolder = str(int(ID[2:5])//20).zfill(2)
-		#filename = glob.glob(root_dir + ID(:1) + "*\\" + subfolder + "*\\" + ID(2:4) + "*.jpg")
-		filename = glob.glob(root_dir + ID[0:2] + "*/" + subfolder + "*/" + ID[2:5] + "*.jpg")
-	else:
-		print ("\nNo Card Found for card ID" + ID + "!")
-
+def determineFilename(ID) : #get the filename for a card
+    #if (ID(:1) == '00' or ID(:1) == '01' or ID(:1) == '03' or ID(:1) == '05' or ID(:1) == '07' or ID(:1) == '09' or ID(:1) == '13' or ID(:1) == '20' or ID(:1) == '22' or ID(:1) == '23' or ID(:1) == '24') :
+    if (ID[0:2] == '00' or ID[0:2] == '01' or ID[0:2] == '03' or ID[0:2] == '05' or ID[0:2] == '07' or ID[0:2] == '09' or ID[0:2] == '13' or ID[0:2] == '20' or ID[0:2] == '22' or ID[0:2] == '23' or ID[0:2] == '24') :
+        #filename = glob.glob(root_dir + ID(:1) + "*\\" + ID(2:4) + "*.jpg")
+        filename = glob.glob(root_dir + ID[0:2] + "*/" + ID[2:5] + "*.jpg")
+        return filename[0]
+    elif (ID[0:2] == '02' or ID[0:2] == '04' or ID[0:2] == '06' or ID[0:2] == '08' or ID[0:2] == '10' or ID[0:2] == '11' or ID[0:2] == '12' or ID[0:2] == '21') :
+        subfolder = str(int(ID[2:5])//20 + 1).zfill(2)
+        #print(subfolder)
+        #filename = glob.glob(root_dir + ID(:1) + "*\\" + subfolder + "*\\" + ID(2:4) + "*.jpg")
+        filename = glob.glob(root_dir + ID[0:2] + "*/" + subfolder + "*/" + ID[2:5] + "*.jpg")
+        return filename[0]
+    else:
+        print ("No Card Found for card ID: " + ID + "!")
 
 def main(argv):
     deck_id = -1
@@ -47,10 +48,11 @@ def main(argv):
 
             for card_id, number in deck_data['data'][0]['cards'].items():
                 #card_picture = requests.get("http://netrunnerdb.com/card_image/" + card_id + ".png")
-				card_filename = root_dir + card_id(0,1) + "*\\" +
-				card_picture = Image.open(root_dir + card_id(0,1) +
-                resized_card_picture = Image.open(BytesIO(card_picture.content)).convert("RGBA")
-                resized_card_picture = resized_card_picture.resize((resize_width, resize_height), Image.LANCZOS)
+                card_filename = determineFilename(card_id)
+                #print(card_filename)
+                card_picture = Image.open(card_filename
+                #resized_card_picture = Image.open(BytesIO(card_picture.content)).convert("RGBA")
+                resized_card_picture = card_picture.resize((resize_width, resize_height), Image.LANCZOS)
 
                 # Create a list of all pictures to be printed (including duplicates)
                 for cards in range (0, number):
