@@ -43,10 +43,10 @@ def main(argv):
         opSys = platform.system()
     except:
         sys.exit("Unable to determine operating system! (Necessary for proper filename formatting)")
-    
+
     if (opSys != "Windows" and opSys != "Linux" and opSys != "Darwin"):
         sys.exit("Sorry I didn't plan on this OS. Not sure what proper file name formatting should be.")
-    
+
     proxy_list = []
 
     if (deck_id != -1):
@@ -73,7 +73,7 @@ def main(argv):
                 except:
                     print("Failed to open/resize image for card id \"" + card_id + "\"!\n")
                     continue
-                
+
                 if (not resized_card_picture): #end this pass if unable to load card image
                     continue
                 try:
@@ -83,7 +83,7 @@ def main(argv):
                         proxy_list.append(resized_card_picture)
                 except:
                     print("Unable to append card with card ID " + card_id + "!\n")
-                    
+
             endOfDecklistProxies = len(proxy_list)
 
         else:
@@ -113,7 +113,7 @@ def main(argv):
             except:
                 print ("Unable to extract a card id from line " + str(lineNum) + ". Line text was \"" + lineText + "\"\n")
                 continue
-            
+
             #print(card_id)
             card_filename = determineFilename(card_id,opSys)
             if (not card_filename): #end this pass if no good card value found
@@ -126,7 +126,7 @@ def main(argv):
             except:
                 print("Failed to open/resize image for card id \"" + card_id + "\"!\n")
                 continue
-                
+
             if (not resized_card_picture): #end this pass if unable to load card image
                 continue
 
@@ -164,31 +164,32 @@ def main(argv):
 
     proxy_index = 0
     #print(len(proxy_list))
-    
+
     if (deck_id != -1):
         for sheet_count in range (0, math.ceil(endOfDecklistProxies/9)): #how many pages do we need?
             if (endOfDecklistProxies - proxy_index > 9):
                 lastIndexForSheet = proxy_index + 9
             else:
-                lastIndexForSheet = endOfDecklistProxies - proxy_index
+                lastIndexForSheet = endOfDecklistProxies
             current_sheet = buildProxySheet(proxy_list,proxy_index,lastIndexForSheet)
-            proxy_index += lastIndexForSheet
-            
+            if(lastIndexForSheet != endOfDecklistProxies):
+                proxy_index += 9
+            else:
+                proxy_index = endOfDecklistProxies
+
             try:
                 current_sheet.save(str(deck_id) + "_" + str(sheet_count)+ '.png', 'PNG', quality=90)
             except:
                 print("Unable to save sheet " + str(deck_id) + "_" + str(sheet_count)+ ".png")
     if (textFilename != -1):
-        print(len(proxy_list))
-        for sheet_count in range (0, math.ceil((len(proxy_list)-proxy_index)/9)): #how many pages do we need?
+        startOfTextFileProxies = proxy_index
+        for sheet_count in range (0, math.ceil((len(proxy_list)-startOfTextFileProxies)/9)): #how many pages do we need?
             if (len(proxy_list) - proxy_index > 9):
                 lastIndexForSheet = proxy_index + 9
             else:
                 lastIndexForSheet = len(proxy_list)
-            print(proxy_index)
-            print(lastIndexForSheet)
             current_sheet = buildProxySheet(proxy_list,proxy_index,lastIndexForSheet)
-            proxy_index += lastIndexForSheet
+            proxy_index += 9
 
             try:
                 current_sheet.save("Text_File_proxies_" + str(sheet_count)+ '.png', 'PNG', quality=90)
@@ -214,7 +215,7 @@ def buildProxySheet(listOfProxies,startIndex,EndIndex):
         index += 3
         if index >= EndIndex:
             break
-            
+
     return sheet
 
 def determineFilename(ID,OS) : #get the filename for a card
