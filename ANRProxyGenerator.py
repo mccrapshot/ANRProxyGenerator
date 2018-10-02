@@ -5,6 +5,7 @@ import math
 import sys
 import getopt
 import os
+import platform
 import glob
 
 base_url = "https://netrunnerdb.com/api/2.0/public/deck/"
@@ -21,30 +22,31 @@ def main(argv):
     textFilename = -1
     deck_id = -1
     try:
-        opts, args = getopt.getopt(argv, 'o:d:t:', ["os=","deckid=","textfile="]) #Get the os and the deck id and/or text file from the command line
+        opts, args = getopt.getopt(argv, 'd:t:', ["deckid=","textfile="]) #Get the deck id and/or text file from the command line
 
         for opt, arg in opts:
-            if opt in ("-o","--os"):
-                opSys = arg
-            elif opt in ("-d", "--deckid"):
+            if opt in ("-d", "--deckid"):
                 deck_id = arg
             elif opt in ("-t", "--textfile"):
                 textFilename = arg
             else:
                 print ("Unsupported argument found!")
 
-        if (opSys == -1):
-            sys.exit("No operating system declared!")
-        elif (opSys.lower() != "W".lower() and opSys.lower() != "Windows".lower() and opSys.lower() != "U".lower() and opSys.lower() != "Unix".lower()):
-            sys.exit("Invalid operating system defined!")
-        elif (deck_id == -1 and textFilename == -1):
+        if (deck_id == -1 and textFilename == -1):
             sys.exit("No deck id or text file defined!")
 
     except getopt.GetoptError as e:
         print("Error: " + str(e))
         print(usage)
         sys.exit(2)
-
+    try:
+        opSys = platform.system()
+    except:
+        sys.exit("Unable to determine operating system! (Necessary for proper filename formatting)")
+    
+    if (opSys != "Windows" and opSys != "Linux" and opSys != "Darwin"):
+        sys.exit("Sorry I didn't plan on this OS. Not sure what proper file name formatting should be.")
+    
     proxy_list = []
 
     if (deck_id != -1):
@@ -198,7 +200,7 @@ def determineFilename(ID,OS) : #get the filename for a card
     filename = []
     if (ID[0:2] == '00' or ID[0:2] == '01' or ID[0:2] == '03' or ID[0:2] == '05' or ID[0:2] == '07' or ID[0:2] == '09' or ID[0:2] == '13' or ID[0:2] == '20' or ID[0:2] == '22' or ID[0:2] == '23' or ID[0:2] == '24') :
         try:
-            if (OS.lower() == "W".lower() or OS.lower() == "Windows".lower()):
+            if (OS == "Windows"):
                 filename = glob.glob(root_dir_W + ID[0:2] + "*\\" + ID[2:5] + "*.jpg")
             else:
                 filename = glob.glob(root_dir_U + ID[0:2] + "*/" + ID[2:5] + "*.jpg")
@@ -208,7 +210,7 @@ def determineFilename(ID,OS) : #get the filename for a card
         try:
             subfolder = str((int(ID[2:5])-1)//20 + 1).zfill(2)
             #print(subfolder)
-            if (OS.lower() == "W".lower() or OS.lower() == "Windows".lower()):
+            if (OS == "Windows"):
                 filename = glob.glob(root_dir_W + ID[0:2] + "*\\" + subfolder + "*\\" + ID[2:5] + "*.jpg")
             else:
                 filename = glob.glob(root_dir_U + ID[0:2] + "*/" + subfolder + "*/" + ID[2:5] + "*.jpg")
