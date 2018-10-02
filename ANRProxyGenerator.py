@@ -10,7 +10,7 @@ import glob
 
 base_url = "https://netrunnerdb.com/api/2.0/public/deck/"
 root_dir_W = "C:\\Netrunner\\"
-root_dir_U = "/Users/USERNAME/Downloads/Netrunner/"
+root_dir_U = "/Users/"
 resize_height = 346 #2000
 resize_width = 243 #1434
 usage = 'ANRProxyGenerator.py -o <operating system> -d <deck id> -t <text file>'
