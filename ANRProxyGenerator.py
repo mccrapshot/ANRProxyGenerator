@@ -83,6 +83,8 @@ def main(argv):
                         proxy_list.append(resized_card_picture)
                 except:
                     print("Unable to append card with card ID " + card_id + "!\n")
+                    
+            endOfDecklistProxies = len(proxy_list)
 
         else:
             sys.exit("Failed attempt to download deck list for deck ID = " + deck_id + "!\n")
@@ -162,39 +164,58 @@ def main(argv):
 
     proxy_index = 0
     #print(len(proxy_list))
-    for sheet_count in range (0, math.ceil(len(proxy_list)/9)): #how many pages do we need?
-        sheet = Image.new('RGBA', (resize_width *3, resize_height * 3)) #a sheet is 3 rows of 3 cards
-        y_offset = 0
-        # Fill three rows of three images
-        rows = [Image.new('RGBA', (resize_width * 3, resize_height))] * 3
-        for row in rows:
-            x_offset = 0
-
-            for j in range (proxy_index, proxy_index+3):
-                if j >= len(proxy_list):
-                    break
-                row.paste(proxy_list[j], (x_offset,0))
-                x_offset += resize_width
-
-            # Combine rows vertically into one image
-            sheet.paste(row, (0, y_offset))
-            y_offset += resize_height
-            proxy_index += 3
-            if proxy_index >= len(proxy_list):
-                break
-
-
-        if (deck_id != -1):
+    
+    if (deck_id != -1):
+        for sheet_count in range (0, math.ceil(endOfDecklistProxies/9)): #how many pages do we need?
+            if (endOfDecklistProxies - proxy_index > 9):
+                lastIndexForSheet = proxy_index + 9
+            else:
+                lastIndexForSheet = endOfDecklistProxies - proxy_index
+            current_sheet = buildProxySheet(proxy_list,proxy_index,lastIndexForSheet)
+            proxy_index += lastIndexForSheet
+            
             try:
-                sheet.save(str(deck_id) + "_" + str(sheet_count)+ '.png', 'PNG', quality=90)
+                current_sheet.save(str(deck_id) + "_" + str(sheet_count)+ '.png', 'PNG', quality=90)
             except:
                 print("Unable to save sheet " + str(deck_id) + "_" + str(sheet_count)+ ".png")
-        else:
+    if (textFilename != -1):
+        print(len(proxy_list))
+        for sheet_count in range (0, math.ceil((len(proxy_list)-proxy_index)/9)): #how many pages do we need?
+            if (len(proxy_list) - proxy_index > 9):
+                lastIndexForSheet = proxy_index + 9
+            else:
+                lastIndexForSheet = len(proxy_list)
+            print(proxy_index)
+            print(lastIndexForSheet)
+            current_sheet = buildProxySheet(proxy_list,proxy_index,lastIndexForSheet)
+            proxy_index += lastIndexForSheet
+
             try:
-                sheet.save("Text_File_proxies_" + str(sheet_count)+ '.png', 'PNG', quality=90)
+                current_sheet.save("Text_File_proxies_" + str(sheet_count)+ '.png', 'PNG', quality=90)
             except:
                 print("Unable to save sheet Text_File_proxies_" + str(sheet_count)+ ".png")
 
+def buildProxySheet(listOfProxies,startIndex,EndIndex):
+    index = startIndex
+    sheet = Image.new('RGBA', (resize_width *3, resize_height * 3)) #a sheet is 3 rows of 3 cards
+    y_offset = 0
+    # Fill three rows of three images
+    rows = [Image.new('RGBA', (resize_width * 3, resize_height))] * 3
+    for row in rows:
+        x_offset = 0
+        for j in range (index, index+3):
+            if j >= EndIndex:
+                break
+            row.paste(listOfProxies[j], (x_offset,0))
+            x_offset += resize_width
+         # Combine rows vertically into one image
+        sheet.paste(row, (0, y_offset))
+        y_offset += resize_height
+        index += 3
+        if index >= EndIndex:
+            break
+            
+    return sheet
 
 def determineFilename(ID,OS) : #get the filename for a card
     filename = []
