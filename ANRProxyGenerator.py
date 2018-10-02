@@ -13,7 +13,7 @@ root_dir_W = "C:\\Netrunner\\"
 root_dir_U = "/Users/"
 resize_height = 346 #2000
 resize_width = 243 #1434
-usage = 'ANRProxyGenerator.py -o <operating system> -d <deck id> -t <text file>'
+usage = 'ANRProxyGenerator.py -d <deck id> -t <text file>'
 
 
 
@@ -64,22 +64,19 @@ def main(argv):
                 card_filename = determineFilename(card_id,opSys)
                 if (not card_filename): #end this pass if no good card value found
                     continue
-                #print(card_filename)
+
                 try:
                     card_picture = Image.open(card_filename)
-                    #print(card_picture)
-                    #resized_card_picture = Image.open(BytesIO(card_picture.content)).convert("RGBA")
                     resized_card_picture = card_picture.resize((resize_width, resize_height), Image.LANCZOS)
                 except:
                     print("Failed to open/resize image for card id \"" + card_id + "\"!\n")
-                    continue
+                    continue #end this pass if no valid image
 
                 if (not resized_card_picture): #end this pass if unable to load card image
                     continue
                 try:
                     # Create a list of all pictures to be printed (including duplicates)
                     for cards in range (0, number):
-                        #print(resized_card_picture)
                         proxy_list.append(resized_card_picture)
                 except:
                     print("Unable to append card with card ID " + card_id + "!\n")
@@ -98,14 +95,13 @@ def main(argv):
             sys.exit("Unable to open/read card lists file \"" + textFilename + "\"!\n")
 
         for lineNum, lineText in enumerate(card_list): #add all card images for cards in in text list to proxy_list
-            #print(lineText)
             card_filename = -1
             card_id = -1
             try:
-                cleanedLineText = "".join(lineText.split())
+                cleanedLineText = "".join(lineText.split()) #getting rid of all whitespace characters
                 if (not cleanedLineText):
                     continue
-                if (cleanedLineText[0:5].isnumeric()):
+                if (cleanedLineText[0:5].isnumeric()): #card id should be a number
                     card_id = cleanedLineText[0:5]
                 else:
                     print("Line text \"" + cleanedLineText + "\" contains an invalid card id on line number " + str(lineNum) + ".\n")
@@ -114,14 +110,12 @@ def main(argv):
                 print ("Unable to extract a card id from line " + str(lineNum) + ". Line text was \"" + lineText + "\"\n")
                 continue
 
-            #print(card_id)
             card_filename = determineFilename(card_id,opSys)
             if (not card_filename): #end this pass if no good card value found
                 continue
-            #print(card_filename)
+
             try:
                 card_picture = Image.open(card_filename)
-                #resized_card_picture = Image.open(BytesIO(card_picture.content)).convert("RGBA")
                 resized_card_picture = card_picture.resize((resize_width, resize_height), Image.LANCZOS)
             except:
                 print("Failed to open/resize image for card id \"" + card_id + "\"!\n")
@@ -163,16 +157,15 @@ def main(argv):
 
 
     proxy_index = 0
-    #print(len(proxy_list))
 
-    if (deck_id != -1):
+    if (deck_id != -1): #build sheets for deck list proxies
         for sheet_count in range (0, math.ceil(endOfDecklistProxies/9)): #how many pages do we need?
-            if (endOfDecklistProxies - proxy_index > 9):
+            if (endOfDecklistProxies - proxy_index > 9):    #9 cards per sheet
                 lastIndexForSheet = proxy_index + 9
             else:
                 lastIndexForSheet = endOfDecklistProxies
             current_sheet = buildProxySheet(proxy_list,proxy_index,lastIndexForSheet)
-            if(lastIndexForSheet != endOfDecklistProxies):
+            if(lastIndexForSheet != endOfDecklistProxies): #determine how far to move index
                 proxy_index += 9
             else:
                 proxy_index = endOfDecklistProxies
@@ -181,10 +174,12 @@ def main(argv):
                 current_sheet.save(str(deck_id) + "_" + str(sheet_count)+ '.png', 'PNG', quality=90)
             except:
                 print("Unable to save sheet " + str(deck_id) + "_" + str(sheet_count)+ ".png")
-    if (textFilename != -1):
+    
+    
+    if (textFilename != -1): #build sheets for text file proxies
         startOfTextFileProxies = proxy_index
         for sheet_count in range (0, math.ceil((len(proxy_list)-startOfTextFileProxies)/9)): #how many pages do we need?
-            if (len(proxy_list) - proxy_index > 9):
+            if (len(proxy_list) - proxy_index > 9): #9 cards per sheet
                 lastIndexForSheet = proxy_index + 9
             else:
                 lastIndexForSheet = len(proxy_list)
@@ -196,7 +191,7 @@ def main(argv):
             except:
                 print("Unable to save sheet Text_File_proxies_" + str(sheet_count)+ ".png")
 
-def buildProxySheet(listOfProxies,startIndex,EndIndex):
+def buildProxySheet(listOfProxies,startIndex,EndIndex): #builds sheets of proxy cards
     index = startIndex
     sheet = Image.new('RGBA', (resize_width *3, resize_height * 3)) #a sheet is 3 rows of 3 cards
     y_offset = 0
@@ -220,6 +215,7 @@ def buildProxySheet(listOfProxies,startIndex,EndIndex):
 
 def determineFilename(ID,OS) : #get the filename for a card
     filename = []
+    #these are releases without subfolders (expansions, core sets, drafts, etc...)
     if (ID[0:2] == '00' or ID[0:2] == '01' or ID[0:2] == '03' or ID[0:2] == '05' or ID[0:2] == '07' or ID[0:2] == '09' or ID[0:2] == '13' or ID[0:2] == '20' or ID[0:2] == '22' or ID[0:2] == '23' or ID[0:2] == '24') :
         try:
             if (OS == "Windows"):
@@ -228,6 +224,7 @@ def determineFilename(ID,OS) : #get the filename for a card
                 filename = glob.glob(root_dir_U + ID[0:2] + "*/" + ID[2:5] + "*.jpg")
         except:
             print ("Could not find card with ID = " + ID + ".\n")
+    #these are releases with subfolders (cycle data packs)
     elif (ID[0:2] == '02' or ID[0:2] == '04' or ID[0:2] == '06' or ID[0:2] == '08' or ID[0:2] == '10' or ID[0:2] == '11' or ID[0:2] == '12' or ID[0:2] == '21') :
         try:
             subfolder = str((int(ID[2:5])-1)//20 + 1).zfill(2)
