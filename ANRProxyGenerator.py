@@ -12,7 +12,7 @@ root_dir_W = "C:\\Netrunner\\"
 root_dir_U = "/Users/USERNAME/Downloads/Netrunner/"
 resize_height = 346 #2000
 resize_width = 243 #1434
-usage = 'ANRProxyGenerator.py -d <deck id>'
+usage = 'ANRProxyGenerator.py -o <operating system> -d <deck id> -t <text file>'
 
 
 
@@ -21,7 +21,7 @@ def main(argv):
     textFilename = -1
     deck_id = -1
     try:
-        opts, args = getopt.getopt(argv, 'o:d:t:', ["os=","deckid=","textfile="]) #Get the deck id from the command line
+        opts, args = getopt.getopt(argv, 'o:d:t:', ["os=","deckid=","textfile="]) #Get the os and the deck id and/or text file from the command line
 
         for opt, arg in opts:
             if opt in ("-o","--os"):
@@ -34,11 +34,11 @@ def main(argv):
                 print ("Unsupported argument found!")
 
         if (opSys == -1):
-            sys.exit("No operating system declared")
+            sys.exit("No operating system declared!")
         elif (opSys.lower() != "W".lower() and opSys.lower() != "Windows".lower() and opSys.lower() != "U".lower() and opSys.lower() != "Unix".lower()):
-            sys.exit("Invalid operating system defined")
+            sys.exit("Invalid operating system defined!")
         elif (deck_id == -1 and textFilename == -1):
-            sys.exit("No deck id or text file defined")
+            sys.exit("No deck id or text file defined!")
 
     except getopt.GetoptError as e:
         print("Error: " + str(e))
@@ -50,15 +50,18 @@ def main(argv):
     if (deck_id != -1):
         try:
             deck_request = requests.get(base_url + str(deck_id))
-        except:
+        except requests.exceptions.RequestException as e:
+            print("Error: " + str(e))
             sys.exit("Unable to download deck list for deck ID = " + deck_id + "!\n")
         if deck_request.status_code == 200:
             try:
                 deck_data = deck_request.json()
             except:
                 sys.exit("Unable to parse deck list for deck ID = " + deck_id + "!\n")
-            for card_id, number in deck_data['data'][0]['cards'].items():
+            for card_id, number in deck_data['data'][0]['cards'].items(): #loop through deck list adding card images to proxy_list
                 card_filename = determineFilename(card_id,opSys)
+                if (not card_filename): #end this pass if no good card value found
+                    continue
                 #print(card_filename)
                 try:
                     card_picture = Image.open(card_filename)
@@ -67,7 +70,10 @@ def main(argv):
                     resized_card_picture = card_picture.resize((resize_width, resize_height), Image.LANCZOS)
                 except:
                     print("Failed to open/resize image for card id \"" + card_id + "\"!\n")
-
+                    continue
+                
+                if (not resized_card_picture): #end this pass if unable to load card image
+                    continue
                 try:
                     # Create a list of all pictures to be printed (including duplicates)
                     for cards in range (0, number):
@@ -79,7 +85,7 @@ def main(argv):
         else:
             sys.exit("Failed attempt to download deck list for deck ID = " + deck_id + "!\n")
 
-    elif (textFilename != -1):
+    if (textFilename != -1):
         try:
             card_file = open(textFilename, 'r')
             card_list = card_file.readlines()
@@ -87,43 +93,70 @@ def main(argv):
         except:
             sys.exit("Unable to open/read card lists file \"" + textFilename + "\"!\n")
 
-        for lineNum, lineText in enumerate(card_list):
+        for lineNum, lineText in enumerate(card_list): #add all card images for cards in in text list to proxy_list
             #print(lineText)
             card_filename = -1
+            card_id = -1
             try:
-                lineText.replace(" ","")
-                card_id = lineText[0:5]
-                #print(card_id)
+                cleanedLineText = "".join(lineText.split())
+                if (not cleanedLineText):
+                    continue
+                if (cleanedLineText[0:5].isnumeric()):
+                    card_id = cleanedLineText[0:5]
+                else:
+                    print("Line text \"" + cleanedLineText + "\" contains an invalid card id on line number " + str(lineNum) + ".\n")
+                    continue
             except:
-                print ("Unable to extract a card id from line " + lineNum + ".\n")
-            if (len(card_id)==5):
-                card_filename = determineFilename(card_id,opSys)
-                #print(card_filename)
-            else:
-                print("Invalid card id on line " + str(lineNum) + ".\n")
-            #if(card_filename):
+                print ("Unable to extract a card id from line " + str(lineNum) + ". Line text was \"" + lineText + "\"\n")
+                continue
+            
+            #print(card_id)
+            card_filename = determineFilename(card_id,opSys)
+            if (not card_filename): #end this pass if no good card value found
+                continue
+            #print(card_filename)
             try:
                 card_picture = Image.open(card_filename)
                 #resized_card_picture = Image.open(BytesIO(card_picture.content)).convert("RGBA")
                 resized_card_picture = card_picture.resize((resize_width, resize_height), Image.LANCZOS)
             except:
                 print("Failed to open/resize image for card id \"" + card_id + "\"!\n")
+                continue
+                
+            if (not resized_card_picture): #end this pass if unable to load card image
+                continue
 
-            try:
+            if (len(cleanedLineText) > 5):
                 # Create a list of all pictures to be printed (including duplicates)
-                if (lineText[5] == ","):
-                    endOfLine = lineText.find("\\n")
-                    if (endOfLine == -1):
-                        endOfLine = len(lineText) + 1
-                    for cards in range (0, int(lineText[6:endOfLine])):
-                        proxy_list.append(resized_card_picture)
+                if (cleanedLineText[5] == "," or cleanedLineText[5] == ";" or cleanedLineText[5] == ":"):
+                    startOfCardCount = 6
+                elif (cleanedLineText[5].isnumeric()):
+                    startOfCardCount = 5
                 else:
+                    startOfCardCount = -1
+                if (startOfCardCount != -1):
+                    endOfLine = len(cleanedLineText) + 1
+                    try:
+                        if (cleanedLineText[startOfCardCount:endOfLine].isnumeric()):
+                            for cards in range (0, int(cleanedLineText[startOfCardCount:endOfLine])):
+                                proxy_list.append(resized_card_picture)
+                        else:
+                            print(cleanedLineText[startOfCardCount:endOfLine] + " is not a number. Only adding one card for card id " + card_id + ".\n")
+                            proxy_list.append(resized_card_picture)
+                    except:
+                        print("Unable to append card with card ID " + card_id + "!\n")
+                else:
+                    try:
+                        proxy_list.append(resized_card_picture)
+                        print("Invalid character \"" + cleanedLineText[5] + "\" after card id " + card_id + ". Only adding one card.\n")
+                    except:
+                        print("Unable to append card with card ID " + card_id + "!\n")
+            else:
+                try:
                     proxy_list.append(resized_card_picture)
-            except:
-                print("Unable to append card with card ID " + card_id + "!\n")
+                except:
+                    print("Unable to append card with card ID " + card_id + "!\n")
 
-    else:
-        sys.exit("Error: Could not retrieve decklist")
 
     proxy_index = 0
     #print(len(proxy_list))
@@ -186,10 +219,13 @@ def determineFilename(ID,OS) : #get the filename for a card
     #print(filename)
     if ( len(filename) > 1 ):
         print ("WARNING: Multiple filenames found for card ID = " + ID + "!\n")
-    try:
-        return filename[0]
-    except:
-        print ("Could not find card with ID = " + ID + ".\n")
+    if (filename):
+        try:
+            return filename[0]
+        except:
+            print ("Could not pass filename for card with ID = " + ID + ".\n")
+    else:
+        return filename
 
 
 
