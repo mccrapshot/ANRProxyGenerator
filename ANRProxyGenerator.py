@@ -7,12 +7,17 @@ import getopt
 import os
 import platform
 import glob
+import svgwrite
 
 base_url = "https://netrunnerdb.com/api/2.0/public/deck/"
 root_dir_W = "C:\\Netrunner\\"
 root_dir_U = "/Users/"
-resize_height = 346 #2000
-resize_width = 243 #1434
+resize_height = 2000 #2000/346
+resize_width = 1434 #1434/243
+card_width = 63 #in mm
+card_height = 88 #in mm
+sheet_width = str(card_width*3)+"mm"
+sheet_height = str(card_height*3)+"mm"
 usage = 'ANRProxyGenerator.py -d <deck id> -t <text file>'
 
 
@@ -171,7 +176,12 @@ def main(argv):
                 proxy_index = endOfDecklistProxies
 
             try:
-                current_sheet.save(str(deck_id) + "_" + str(sheet_count)+ '.png', 'PNG', quality=90)
+                sheetName = str(deck_id) + "_" + str(sheet_count)
+                current_sheet.save(sheetName + '.png', 'PNG', quality=95)
+                #generate an svg file with mm dimensioning so cards can be printed straight from there and be the proper size
+                dwg = svgwrite.Drawing(filename = sheetName + '.svg', size = (sheet_width,sheet_height))
+                dwg.add(dwg.image(sheetName + '.png', insert = (0,0),size=(sheet_width,sheet_height)))
+                dwg.save()
             except:
                 print("Unable to save sheet " + str(deck_id) + "_" + str(sheet_count)+ ".png")
     
@@ -187,7 +197,12 @@ def main(argv):
             proxy_index += 9
 
             try:
-                current_sheet.save("Text_File_proxies_" + str(sheet_count)+ '.png', 'PNG', quality=90)
+                sheetName = "Text_File_proxies_" + str(sheet_count)
+                current_sheet.save(sheetName + '.png', 'PNG', quality=95)
+                #generate an svg file with mm dimensioning so cards can be printed straight from there and be the proper size
+                dwg = svgwrite.Drawing(filename = sheetName + '.svg', size = (sheet_width,sheet_height))
+                dwg.add(dwg.image(sheetName + '.png', insert = (0,0),size=(sheet_width,sheet_height)))
+                dwg.save()
             except:
                 print("Unable to save sheet Text_File_proxies_" + str(sheet_count)+ ".png")
 
