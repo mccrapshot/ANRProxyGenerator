@@ -11,7 +11,7 @@ import svgwrite
 
 base_url = "https://netrunnerdb.com/api/2.0/public/deck/"
 root_dir_W = "C:\\Netrunner\\"
-root_dir_U = "/Users/"
+root_dir_U = "/Users/USERNAME/Downloads/Netrunner/"
 resize_height = 2000 #2000/346
 resize_width = 1434 #1434/243
 card_width = 63 #in mm
@@ -188,8 +188,8 @@ def main(argv):
                 dwg.save()
             except:
                 print("Unable to create svg file " + sheetName + ".svg\n")
-    
-    
+
+
     if (textFilename != -1): #build sheets for text file proxies
         startOfTextFileProxies = proxy_index
         for sheet_count in range (0, math.ceil((len(proxy_list)-startOfTextFileProxies)/9)): #how many pages do we need?
@@ -213,8 +213,8 @@ def main(argv):
                 dwg.save()
             except:
                 print("Unable to create svg file " + sheetName + ".svg\n")
-                
-                
+
+
 
 def buildProxySheet(listOfProxies,startIndex,EndIndex): #builds sheets of proxy cards
     index = startIndex
