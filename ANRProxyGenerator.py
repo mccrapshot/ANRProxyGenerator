@@ -178,12 +178,16 @@ def main(argv):
             try:
                 sheetName = str(deck_id) + "_" + str(sheet_count)
                 current_sheet.save(sheetName + '.png', 'PNG', quality=95)
+            except:
+                print("Unable to save sheet " + sheetName + ".png")
+                continue
+            try:
                 #generate an svg file with mm dimensioning so cards can be printed straight from there and be the proper size
                 dwg = svgwrite.Drawing(filename = sheetName + '.svg', size = (sheet_width,sheet_height))
                 dwg.add(dwg.image(sheetName + '.png', insert = (0,0),size=(sheet_width,sheet_height)))
                 dwg.save()
             except:
-                print("Unable to save sheet " + str(deck_id) + "_" + str(sheet_count)+ ".png")
+                print("Unable to create svg file " + sheetName + ".svg\n")
     
     
     if (textFilename != -1): #build sheets for text file proxies
@@ -199,12 +203,18 @@ def main(argv):
             try:
                 sheetName = "Text_File_proxies_" + str(sheet_count)
                 current_sheet.save(sheetName + '.png', 'PNG', quality=95)
+            except:
+                print("Unable to save sheet Text_File_proxies_" + str(sheet_count)+ ".png")
+                continue
+            try:
                 #generate an svg file with mm dimensioning so cards can be printed straight from there and be the proper size
                 dwg = svgwrite.Drawing(filename = sheetName + '.svg', size = (sheet_width,sheet_height))
                 dwg.add(dwg.image(sheetName + '.png', insert = (0,0),size=(sheet_width,sheet_height)))
                 dwg.save()
             except:
-                print("Unable to save sheet Text_File_proxies_" + str(sheet_count)+ ".png")
+                print("Unable to create svg file " + sheetName + ".svg\n")
+                
+                
 
 def buildProxySheet(listOfProxies,startIndex,EndIndex): #builds sheets of proxy cards
     index = startIndex
